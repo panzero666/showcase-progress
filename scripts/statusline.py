@@ -158,7 +158,7 @@ def chain_command(command: str):
 def main(argv=None) -> int:
     for stream in (sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(encoding="utf-8", errors="replace")
+            stream.reconfigure(encoding="utf-8", errors="replace", newline="\n")
         except (AttributeError, ValueError):
             pass
     parser = argparse.ArgumentParser(description="Claude Code status line for showcase-progress")
