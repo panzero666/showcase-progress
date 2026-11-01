@@ -304,8 +304,8 @@ def load(path: str) -> dict:
     raise AssertionError
 
 
-def save(path: str, state: dict) -> None:
-    state["updated_at"] = stamp(now())
+def save(path: str, state: dict, moment: datetime = None) -> None:
+    state["updated_at"] = stamp(moment or now())
     folder = os.path.dirname(os.path.abspath(path))
     if folder and not os.path.isdir(folder):
         os.makedirs(folder, exist_ok=True)
@@ -707,7 +707,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "history": (previous or {}).get("history") or [],
     }
     remember(state, parse_time(args.now), "init", "")
-    save(args.state, state)
+    save(args.state, state, parse_time(args.now))
     if not args.quiet:
         print(render_block(state, args.width, parse_time(args.now)))
     return 0
@@ -716,6 +716,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_update(args: argparse.Namespace) -> int:
     state = load_with_lang(args)
     moment = parse_time(args.now)
+    last_event = state.get("updated_at")
     moved = []
     for key, new_state, note in parse_moves(args.moves):
         if new_state not in STATES:
@@ -725,6 +726,8 @@ def cmd_update(args: argparse.Namespace) -> int:
         sub["state"] = new_state
         if note:
             sub["note"] = note
+        if new_state == "doing" and old != "doing":
+            sub["began_at"] = stamp(moment)
         if new_state == "done":
             sub["finished_at"] = stamp(moment)
         if new_state in ("done", "todo", "dropped"):
@@ -740,9 +743,23 @@ def cmd_update(args: argparse.Namespace) -> int:
 
     if args.took:
         try:
-            only_one("--took")["actual"] = parse_minutes(args.took)
+            target = only_one("--took")
+            target["actual"] = parse_minutes(args.took)
+            target["actual_source"] = "reported"
         except ValueError as exc:
             die(T("flag_err", flag="--took", exc=exc))
+    elif len(moved) == 1 and moved[0]["to"] == "done" and moved[0]["from"] != "done":
+        # Time it ourselves instead of trusting the agent's memory: from when
+        # the subtask became doing, or else from the previous ledger event.
+        # Agents asked "how long did that take?" answer in human time - we
+        # measured one reporting 2h35m for ten minutes of wall clock.
+        target = find(state, moved[0]["id"])
+        began = target.get("began_at") or last_event
+        if began:
+            minutes = (moment - parse_time(began)).total_seconds() / 60.0
+            if minutes > 0:
+                target["actual"] = round(minutes, 2)
+                target["actual_source"] = "measured"
     if args.est:
         try:
             only_one("--est")["est"] = parse_minutes(args.est)
@@ -756,7 +773,7 @@ def cmd_update(args: argparse.Namespace) -> int:
         only_one("--evidence")["evidence"] = args.evidence
 
     remember(state, moment, "update", moved)
-    save(args.state, state)
+    save(args.state, state, moment)
     if args.brief:
         # One call returns the updated line - no extra round trip to render.
         label = " ".join(
@@ -786,7 +803,7 @@ def cmd_replan(args: argparse.Namespace) -> int:
             continue
         if old["state"] in ("done", "dropped"):
             sub["state"] = old["state"]
-        for field in ("note", "actual", "finished_at", "evidence", "count"):
+        for field in ("note", "actual", "actual_source", "began_at", "finished_at", "evidence", "count"):
             if old.get(field) and not sub.get(field):
                 sub[field] = old[field]
     removed_done = [
@@ -797,7 +814,7 @@ def cmd_replan(args: argparse.Namespace) -> int:
     state["subtasks"] = subs
     remember(state, moment, "replan",
              {"before": before_pct, "removed_done": removed_done, "reason": args.reason or ""})
-    save(args.state, state)
+    save(args.state, state, moment)
     print(render_block(state, args.width, moment))
     return 0
 
@@ -895,6 +912,7 @@ def cmd_export(args: argparse.Namespace) -> int:
                 "est_minutes": round(s["est"], 1),
                 "est_human": fmt_minutes(s["est"]),
                 "actual_minutes": round(s["actual"], 1) if s.get("actual") else None,
+                "actual_source": s.get("actual_source", "reported" if s.get("actual") else None),
                 "count": s.get("count"),
                 "done_when": s.get("done_when", ""),
                 "evidence": s.get("evidence", ""),
@@ -980,7 +998,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("update", parents=[common], help="move subtasks forward")
     p.add_argument("moves", help="Q2=done,Q3=blocked(reason) or a JSON array")
-    p.add_argument("--took", help="how long this subtask actually took, e.g. 40m")
+    p.add_argument("--took", help="override the measured time with a known one, e.g. 40m "
+                                  "(by default done is timed from doing, or from the last update)")
     p.add_argument("--est", help="correct this subtask's estimate")
     p.add_argument("--count", help="countable partial progress while doing, e.g. 3/6")
     p.add_argument("--evidence", help="what proves this subtask is done")

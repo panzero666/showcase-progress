@@ -48,14 +48,37 @@ showcase-progress 是一个 [Agent Skill](https://agentskills.io)：一份 `SKIL
 
 - **按耗时加权。** `进度 = 已完成子任务的预计耗时 / 全部子任务的预计耗时`。
 - **进行中记 0 分。** 唯一的例外是真的数得出来：`--count 3/6`，已迁移 3 个接口。数出来的是证据，估出来的"60%"不是。
-- **剩余时间自动修正。** 用 `--took 40m` 记实际耗时。有两个以上样本、覆盖计划 20% 以上、且速度偏差超过 15% 时，剩余时间按实测速度重算。
+- **剩余时间自动修正。** 脚本自己给每个子任务计时，从 `doing` 到 `done`。有两个以上样本、覆盖计划 20% 以上、且速度偏差超过 15% 时，剩余时间按实测速度重算。
 - **完成要有证据。** 子任务可以写 `done_when`，标完成时用 `--evidence` 附上证据。
 - **重启不丢。** `replan` 改计划时保留已完成的工作，并记下为什么改。
+- **一直看得见。** 可选的 Claude Code [状态栏](#状态栏) 让进度条常驻屏幕。
 - **中英文输出**，根据任务标题自动选择。
+
+## 用它自己做出来的，而且当场抓到了问题
+
+这个仓库是一个 AI Agent（Claude）用 showcase-progress 记录自己的进度做出来的。账本是真的，结果如下：
+
+| 建仓库、脚本、测试、文档、实测、README（Q2–Q7） | 时间 |
+|---|---|
+| 计划（Agent 自己估的） | 3h05m |
+| Agent 用 `--took` **自己报的**实际耗时 | 2h20m |
+| 账本里的**时间戳**显示，从第一次更新到最后一次 | **10 分 21 秒** |
+
+Agent 不是故意撒谎。问它"刚才花了多久"，它会按人的速度来回答。
+这正是本项目要杜绝的"编出来的数字"，所以 v1.1 不再信它：**脚本自己给每个子任务计时**，
+从 `doing` 到 `done`。`--took` 只在你手上有真实数字时用来覆盖。
 
 ## 安装
 
-skill 就是一个文件夹，放到你的 Agent 读 skill 的地方即可。
+**Claude Code：一条命令**（Claude Code 2.1.275 及以上）
+
+```text
+/plugin install showcase-progress --marketplace panzero666/showcase-progress
+```
+
+旧版本：先 `/plugin marketplace add panzero666/showcase-progress`，再 `/plugin install showcase-progress@showcase-progress`。
+
+**任意 Agent：** skill 就是一个文件夹，放到你的 Agent 读 skill 的地方即可。
 
 | Agent | 位置 | 状态 |
 |---|---|---|
@@ -104,7 +127,9 @@ cd showcase-progress; .\install.ps1
 
 ```bash
 python3 scripts/progress.py init --plan plan.json            # 建账本
-python3 scripts/progress.py update "Q1=done" --took 40m --brief
+python3 scripts/progress.py update "Q1=doing"                # 开始计时
+python3 scripts/progress.py update "Q1=done" --brief          # 停止计时，耗时自动记录
+python3 scripts/progress.py update "Q1=done" --took 40m       # 或者用已知的真实耗时覆盖
 python3 scripts/progress.py update "Q2=done" --evidence "curl -> 202" --brief
 python3 scripts/progress.py update "Q3=doing" --count 3/6 --brief
 python3 scripts/progress.py update "Q4=blocked(等权限)"
@@ -123,6 +148,29 @@ python3 scripts/progress.py history                          # 回放每一步
 
 </details>
 
+## 状态栏
+
+让进度条常驻 Claude Code 底部，AI 忘了贴进度你也看得见：
+
+```text
+◆ 统一云函数错误处理 ■■■■■■■□□□□□ · 60.6% · Q4 1/3 · 按当前速度剩 2h23m
+```
+
+它会从当前会话所在文件夹往上找最近的 `.showcase-progress/state.json`；找不到就什么都不显示，任务完成 30 分钟后自动消失。
+在 `~/.claude/settings.json` 里加上：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python ~/.claude/skills/showcase-progress/scripts/statusline.py"
+  }
+}
+```
+
+已经有状态栏了？保留它：`statusline.py --chain "<你原来的命令>"` 会先输出你原来的状态栏，再在下一行输出进度条。
+用插件方式安装的话，脚本在 `~/.claude/plugins/cache/showcase-progress/showcase-progress/<版本号>/scripts/statusline.py`。
+
 ## 常见问题
 
 **为什么"进行中"算 0？**
@@ -134,7 +182,7 @@ python3 scripts/progress.py history                          # 回放每一步
 一个诚实的估计，加上按实测速度修正，每做完一个子任务就更准一点。
 
 **它能测出模型思考了多久吗？**
-不能，也不会假装能。"已开工"是从建账本开始的钟表时间；每个子任务的真实耗时来自 `--took`。
+不能，也不会假装能。"已开工"是从建账本开始的钟表时间；每个子任务的耗时由脚本在 `doing` 和 `done` 之间自动计时，中间的等待也算在内。
 
 **会在后台自动刷新吗？**
 不会。Agent 没有常驻进程，所以进度条是在子任务边界贴出来的快照。

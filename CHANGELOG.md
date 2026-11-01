@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 — 2026-11-02
+
+- **The script times subtasks itself.** `done` records the time since the subtask went
+  `doing` (or since the previous update). `--took` is now an override, not the source.
+  Building this repo showed why: the agent reported 2h20m for 10 minutes of wall clock.
+- **Status line for Claude Code** (`scripts/statusline.py`): the bar stays on screen,
+  finds the nearest ledger, fades out after the task ends, and `--chain`s an existing
+  status line.
+- **Claude Code plugin**: `/plugin install showcase-progress --marketplace panzero666/showcase-progress`
+- 50 tests (timing and status line added)
+
 ## 1.0.0 — 2026-11-01
 
 First public release, grown out of a private skill called `agent-progress`.

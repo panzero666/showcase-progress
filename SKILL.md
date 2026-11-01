@@ -13,7 +13,7 @@ description: >
 license: MIT
 compatibility: Needs Python 3.8+ (standard library only) to run scripts/progress.py.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # showcase-progress
@@ -88,7 +88,8 @@ override with `--lang en|zh` or `SP_LANG`.
 ## Step 3 — move it forward at subtask boundaries
 
 ```bash
-python3 scripts/progress.py update "Q1=done" --took 40m --brief
+python3 scripts/progress.py update "Q1=doing"                     # starts the clock for Q1
+python3 scripts/progress.py update "Q1=done" --brief              # stops it
 python3 scripts/progress.py update "Q2=done" --evidence "curl returned 202, row id 17" --brief
 python3 scripts/progress.py update "Q3=doing" --count 2/6 --brief
 python3 scripts/progress.py update "Q4=blocked(waiting for staging access)"
@@ -105,10 +106,19 @@ handlers migrated, 12 of 20 tests passing — `--count k/n` earns that share.
 Only use it when you can point at the k things; a count is evidence, a guessed
 "60%" is not, so there is no flag for that.
 
-**Record `--took`** (`40s`, `3m`, `1h10m` — use seconds for fast steps rather
-than rounding up). It turns the plan into a forecast: once two finished
-subtasks with real durations cover 20%+ of the plan and the pace is off by
-more than 15%, time left is rescaled and labelled "at current pace".
+**Let the script time it — don't report times from memory.** When a subtask
+goes `done`, the script records how long it took: from when you marked it
+`doing`, or else since the previous update. Agents asked "how long did that
+take?" answer in human time; this skill's own author-agent once reported 2h35m
+for ten minutes of wall clock. So update **one subtask at a time, as it
+happens**: mark `doing` when you start, `done` when you finish. Batching
+updates at the end of a turn ruins the timing (a batch `done` isn't timed at
+all). Pass `--took 40m` only when you have a real number from elsewhere — the
+user told you, or a command printed its runtime.
+
+Measured times turn the plan into a forecast: once two finished subtasks with
+real durations cover 20%+ of the plan and the pace is off by more than 15%,
+time left is rescaled and labelled "at current pace".
 
 **Give `--evidence` for subtasks with `done_when`.** What did you run or see
 that proves it? `check` warns about done subtasks that have a condition but no
@@ -164,7 +174,16 @@ python3 scripts/progress.py history    # replay every step
 | 15 subtasks of exactly 1h each | Obviously invented, no information | 5–9 uneven, honest estimates |
 | Split work finer to "make progress" | Weights are time, so it can't inflate — it only adds noise | Split by deliverable |
 | Quietly edit estimates down | Destroys trust in "time left" | `--est` or `replan --reason` |
-| Never record `--took` | The ETA never gets better | Record it when marking done |
+| Guess `--took` from memory | Agents report human-scale times; the ETA goes wrong | Mark `doing`/`done` as it happens; the script times it |
+| Batch several `done`s at the end | No timing, and the user saw nothing live | One update per finished subtask |
+
+## Status line (Claude Code)
+
+If the user wants the bar always visible, `scripts/statusline.py` prints it in
+Claude Code's status line from the nearest `.showcase-progress/state.json`. Set
+it up only when asked, since it edits the user's settings: point `statusLine`
+at `python <skill-dir>/scripts/statusline.py`, and if they already have a
+status line, keep it with `--chain "<their existing command>"`.
 
 ## References
 

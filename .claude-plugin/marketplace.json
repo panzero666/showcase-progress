@@ -1,0 +1,15 @@
+{
+  "name": "showcase-progress",
+  "description": "showcase-progress: a progress bar your AI agent can't fake",
+  "owner": {
+    "name": "panzero666",
+    "url": "https://github.com/panzero666"
+  },
+  "plugins": [
+    {
+      "name": "showcase-progress",
+      "source": "./",
+      "description": "Time-weighted progress bar with evidence checks and a self-correcting ETA"
+    }
+  ]
+}

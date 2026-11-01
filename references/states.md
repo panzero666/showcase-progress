@@ -6,7 +6,7 @@
 |---|---|---|---|
 | `todo` | 0 | not started | `init` / `replan` |
 | `doing` | 0 (or k/n with `--count`) | in progress | `update Q1=doing` |
-| `done` | full estimate | finished | `update Q1=done --took 40m` |
+| `done` | full estimate | finished; time is measured since `doing` | `update Q1=done` |
 | `blocked` | 0 | stuck on something outside your control | `update Q1=blocked(reason)` |
 | `dropped` | 0, **and leaves the denominator** | decided not to do it | `update Q1=dropped(reason)` |
 

@@ -1,8 +1,8 @@
 # Estimating
 
 The estimate is the bar's only denominator, so it decides whether the bar
-means anything. Good news: it doesn't have to be right the first time. Record
-`--took` and the script corrects the pace for you. The first estimate has to be
+means anything. Good news: it doesn't have to be right the first time. The script
+times each finished subtask and corrects the pace for you. The first estimate has to be
 **honest**, not **correct**.
 
 ## Accepted formats
@@ -29,8 +29,8 @@ means anything. Good news: it doesn't have to be right the first time. Record
 3. **Look before you estimate.** Spend five minutes on the files or material
    first; otherwise you're estimating the code you imagine. That look is often
    subtask one.
-4. **Rough is fine.** What hurts isn't a rough first estimate, it's never
-   recording actuals.
+4. **Rough is fine.** What hurts isn't a rough first estimate, it's batching updates
+   so the script can't time anything.
 
 ## Granularity
 
@@ -59,7 +59,7 @@ Split by **deliverable**, not by action:
 ## How the pace correction works
 
 ```
-pace      = Σ actual / Σ estimate        (finished subtasks with --took only)
+pace      = Σ actual / Σ estimate        (finished subtasks with a measured or --took time)
 time left = open estimate × pace
 ```
 

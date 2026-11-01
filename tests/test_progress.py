@@ -155,6 +155,45 @@ class Speed(Base):
         self.assertIn("left at current pace", out)
 
 
+class Timing(Base):
+    def sub(self, sid):
+        return [s for s in self.ledger()["subtasks"] if s["id"] == sid][0]
+
+    def test_measured_from_doing(self):
+        self.init()
+        self.run_cli("update", "Q1=doing", "--now", "2026-11-01T09:10:00")
+        self.run_cli("update", "Q1=done", "--now", "2026-11-01T09:35:00")
+        self.assertAlmostEqual(self.sub("Q1")["actual"], 25)
+        self.assertEqual(self.sub("Q1")["actual_source"], "measured")
+
+    def test_measured_from_last_event(self):
+        self.init()
+        self.run_cli("update", "Q1=done", "--now", "2026-11-01T09:20:00")
+        self.run_cli("update", "Q2=done", "--now", "2026-11-01T09:50:00")
+        self.assertAlmostEqual(self.sub("Q1")["actual"], 20)
+        self.assertAlmostEqual(self.sub("Q2")["actual"], 30)
+
+    def test_took_overrides_measurement(self):
+        self.init()
+        self.run_cli("update", "Q1=done", "--took", "12m", "--now", "2026-11-01T09:40:00")
+        self.assertEqual(self.sub("Q1")["actual"], 12)
+        self.assertEqual(self.sub("Q1")["actual_source"], "reported")
+
+    def test_batch_done_is_not_timed(self):
+        self.init()
+        self.run_cli("update", "Q1=done,Q2=done", "--now", "2026-11-01T09:40:00")
+        self.assertNotIn("actual", self.sub("Q1"))
+
+    def test_measured_pace_corrects_eta(self):
+        # an agent that is far faster than its human-sized estimates
+        self.init()
+        self.run_cli("update", "Q1=done", "--now", "2026-11-01T09:03:00")
+        self.run_cli("update", "Q2=done", "--now", "2026-11-01T09:10:00")
+        info = self.info()
+        self.assertAlmostEqual(info["factor"], 10 / 120)     # 3m + 7m for 30m + 90m
+        self.assertAlmostEqual(info["remaining"], 160 * 10 / 120)
+
+
 class Replan(Base):
     def test_replan_keeps_finished_work(self):
         self.init()

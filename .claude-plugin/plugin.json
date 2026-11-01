@@ -1,0 +1,14 @@
+{
+  "name": "showcase-progress",
+  "displayName": "Showcase Progress",
+  "version": "1.1.0",
+  "description": "A progress bar your AI agent can't fake: time-weighted, evidence-based, with a self-correcting ETA and an optional status line.",
+  "author": {
+    "name": "panzero666",
+    "url": "https://github.com/panzero666"
+  },
+  "homepage": "https://github.com/panzero666/showcase-progress",
+  "repository": "https://github.com/panzero666/showcase-progress",
+  "license": "MIT",
+  "keywords": ["progress", "eta", "progress-bar", "planning", "estimation", "agent-skills"]
+}
