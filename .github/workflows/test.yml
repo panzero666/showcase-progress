@@ -11,13 +11,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.8", "3.12", "3.13"]
+        # Python 3.8 builds only exist for the Windows runner now
         exclude:
           - os: macos-latest
             python: "3.8"
+          - os: ubuntu-latest
+            python: "3.8"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
       - name: Unit tests
