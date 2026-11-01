@@ -28,6 +28,7 @@ import argparse
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 from datetime import timedelta
@@ -134,13 +135,37 @@ def status_text(data: dict, moment=None, color: bool = True) -> str:
     return " · ".join(parts)
 
 
+def read_stdin() -> str:
+    # Claude Code sends UTF-8. On Windows the locale is often GBK, which would
+    # garble non-ASCII paths and the ledger would never be found.
+    if sys.stdin is None or sys.stdin.isatty():
+        return ""
+    stream = getattr(sys.stdin, "buffer", None)
+    if stream is None:
+        return sys.stdin.read()
+    return stream.read().decode("utf-8", "replace")
+
+
+def chain_command(command: str):
+    # Claude Code runs status lines through Git Bash on Windows, so existing
+    # commands are bash syntax; cmd.exe (shell=True) would choke on them.
+    bash = shutil.which("bash") if os.name == "nt" else None
+    if bash:
+        return [bash, "-c", command], False
+    return command, True
+
+
 def main(argv=None) -> int:
-    progress.safe_stdout()
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     parser = argparse.ArgumentParser(description="Claude Code status line for showcase-progress")
     parser.add_argument("--chain", help="another status line command to run first (gets the same stdin)")
     args = parser.parse_args(argv)
 
-    raw = sys.stdin.read() if not sys.stdin.isatty() else ""
+    raw = read_stdin()
     try:
         data = json.loads(raw) if raw.strip() else {}
     except ValueError:
@@ -148,7 +173,8 @@ def main(argv=None) -> int:
 
     if args.chain:
         try:
-            done = subprocess.run(args.chain, shell=True, input=raw.encode("utf-8"),
+            command, shell = chain_command(args.chain)
+            done = subprocess.run(command, shell=shell, input=raw.encode("utf-8"),
                                   stdout=subprocess.PIPE, timeout=10)
             chained = done.stdout.decode("utf-8", "replace").rstrip("\n")
             if chained:
