@@ -74,7 +74,7 @@ def svg(theme: str) -> str:
         "A progress bar your AI agent can\u2019t fake.</text>" % (SANS, c["muted"]),
         '<text x="1200" y="150" text-anchor="end" font-family="%s" font-size="64" font-weight="700" fill="%s">'
         "%s</text>" % (MONO, c["done"], PERCENT),
-        '<text x="1200" y="196" text-anchor="end" font-family="%s" font-size="19" fill="%s">'
+        '<text x="1200" y="196" text-anchor="end" font-family="%s" font-size="22" fill="%s">'
         "%s left at current pace</text>" % (MONO, c["muted"], progress.fmt_minutes(INFO["remaining"])),
     ]
     y, h = 248, 34
@@ -93,11 +93,11 @@ def svg(theme: str) -> str:
         label = "%s · %s" % (sub["id"], progress.fmt_minutes(sub["est"]))
         if sub.get("count"):
             label += " · %d/%d" % tuple(sub["count"])
-        out.append('<text x="%.1f" y="%d" font-family="%s" font-size="14" fill="%s">%s</text>'
-                   % (x + 2, y + h + 26, MONO, c["muted"], label))
-    out.append('<text x="80" y="%d" font-family="%s" font-size="15" fill="%s">'
+        out.append('<text x="%.1f" y="%d" font-family="%s" font-size="18" fill="%s">%s</text>'
+                   % (x + 2, y + h + 28, MONO, c["muted"], label))
+    out.append('<text x="80" y="%d" font-family="%s" font-size="17" fill="%s">'
                "segment width = estimated time · only finished or counted work fills the bar</text>"
-               % (y + h + 58, SANS, c["muted"]))
+               % (y + h + 64, SANS, c["muted"]))
     out.append("</svg>")
     return "\n".join(out) + "\n"
 

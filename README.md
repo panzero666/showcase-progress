@@ -11,7 +11,6 @@
   <img src="https://img.shields.io/badge/dependencies-zero-2ea44f" alt="zero dependencies">
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent%20Skills-standard-7c3aed" alt="Agent Skills"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
-  <a href="https://github.com/panzero666/showcase-progress/stargazers"><img src="https://img.shields.io/github/stars/panzero666/showcase-progress?style=flat&color=f5b301" alt="stars"></a>
 </p>
 
 <p align="center">
