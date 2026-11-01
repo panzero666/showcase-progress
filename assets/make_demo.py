@@ -1,7 +1,7 @@
 """Render assets/demo.svg from a real run of scripts/progress.py.
 
 Every line in the image is actual script output; nothing is typed by hand.
-Run: python tools/make_demo.py
+Run: python assets/make_demo.py
 """
 
 import contextlib

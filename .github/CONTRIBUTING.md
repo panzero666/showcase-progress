@@ -26,4 +26,4 @@ Thanks for helping. The most useful things right now:
 python -m unittest discover -s tests -v
 ```
 
-If you change output, regenerate the demo: `python tools/make_demo.py`.
+If you change output, regenerate the images: `python assets/make_demo.py` and `python assets/make_banner.py`.

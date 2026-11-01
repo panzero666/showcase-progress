@@ -1,45 +1,58 @@
-# showcase-progress
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <img src="assets/banner-light.svg" alt="showcase-progress：一条 AI 编不出来的进度条" width="100%">
+  </picture>
+</p>
 
-**一条 AI 编不出来的进度条。**
+<p align="center">
+  <a href="https://github.com/panzero666/showcase-progress/actions/workflows/test.yml"><img src="https://github.com/panzero666/showcase-progress/actions/workflows/test.yml/badge.svg" alt="tests"></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B-3776AB" alt="python 3.8+">
+  <img src="https://img.shields.io/badge/dependencies-zero-2ea44f" alt="零依赖">
+  <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent%20Skills-standard-7c3aed" alt="Agent Skills"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
+  <a href="https://github.com/panzero666/showcase-progress/stargazers"><img src="https://img.shields.io/github/stars/panzero666/showcase-progress?style=flat&color=f5b301" alt="stars"></a>
+</p>
 
-[![test](https://github.com/panzero666/showcase-progress/actions/workflows/test.yml/badge.svg)](https://github.com/panzero666/showcase-progress/actions/workflows/test.yml)
-![python](https://img.shields.io/badge/python-3.8%2B-blue)
-![deps](https://img.shields.io/badge/dependencies-none-brightgreen)
-![license](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <a href="README.md">English</a> · <b>中文</b>
+  &nbsp;|&nbsp;
+  <a href="#安装">安装</a> · <a href="#原理">原理</a> · <a href="PROMPT.zh-CN.md">纯提示词版</a> · <a href="#常见问题">常见问题</a>
+</p>
 
-[English](README.md)
+---
 
-<p align="center"><img src="assets/demo.svg" alt="showcase-progress 演示" width="820"></p>
+AI 说：**"大概完成 70% 了，快好了。"** 一小时后，它还是这么说。
 
-再看一眼上面的演示：Q2 做完之后，**剩余时间反而变多了**（4h10m → 4h16m）。
-Q1、Q2 都比预估慢，脚本就不再相信原计划，按实际速度把剩下的重新算了一遍。
-换成一般的 AI 汇报，这时候它会说"已完成 35%，快好了"。
+**showcase-progress** 用一本账代替这种感觉：Agent 负责规划和估时，一个小脚本负责算数，
+只有做完的、或者数得出来的工作才会让进度条往前走。
 
-## 问题在哪
+| AI 平时怎么说 | showcase-progress 怎么显示 |
+|---|---|
+| "大概完成 70% 了" | `60.6%`：计划 275 分钟里完成了 166 分钟，直接从账本算出来 |
+| 把活拆成 20 步，先挑容易的做 | 按预计耗时加权，拆得再碎也虚增不了 |
+| "再几分钟就好"……说了一个小时 | **按当前速度剩 2h23m**：剩余时间按实测速度重算 |
+| "做完了！"（文件是建了，能跑吗？） | 完成要有证据；没给证据的，`check` 会指出来 |
+| 关掉会话就从头再来 | 账本存在磁盘上：`render` 一下接着干 |
 
-问 AI Agent 做到哪了，你得到的是一种感觉，而不是一个数字：
+## 看它跑一遍
 
-- "完成 70%"——按什么算的？
-- 把活拆成 20 个小步骤，先做容易的几个，进度立刻 50%。
-- "再几分钟就好"——说了一个小时。
-- 文件建好了就算这步完成，那它能跑吗？
+<p align="center"><img src="assets/demo.svg" alt="showcase-progress 演示" width="860"></p>
 
-## 这个 skill 做什么
+注意 **Q2** 之后最右边的数字：剩余时间**变多了**，从 4h10m 涨到 4h16m。
+Q1、Q2 都比预估慢，脚本就不再相信原计划，按实际速度重算了剩下的部分。
+这才是诚实的答案，哪怕没人爱听。
 
-showcase-progress 是一个 [Agent Skill](https://agentskills.io)：一份 `SKILL.md`
-加一个零依赖的 Python 脚本。Agent 负责规划，脚本负责记账：
+## 原理
 
-1. **进度按预计耗时加权，不按步骤个数。**
-   `进度 = 已完成子任务的预计耗时 / 全部子任务的预计耗时`。拆得再碎也虚增不了。
-2. **"进行中"记 0 分。** 只有 `done` 才算数。唯一的例外是真的数得出来
-   （`--count 3/6`，已迁移 3 个接口）——数出来的是证据，估出来的"60%"不是。
-3. **剩余时间会自己修正。** 记下已完成子任务的实际耗时（`--took 40m`）；
-   有两个以上真实样本、覆盖计划 20% 以上、且速度偏差超过 15% 时，
-   剩余时间按实际速度重算，并标注"按当前速度"。
-4. **完成要有证据。** 子任务可以写验收条件 `done_when`；
-   标了完成却没给证据的，`check` 会指出来。
-5. **什么都不会丢。** 账本是项目里的一个 JSON 文件。关掉会话、明天回来，
-   `render` 一下接着干。`replan` 改计划时保留已完成的工作，并记下为什么改。
+showcase-progress 是一个 [Agent Skill](https://agentskills.io)：一份 `SKILL.md` 加一个零依赖的 Python 脚本。
+
+- **按耗时加权。** `进度 = 已完成子任务的预计耗时 / 全部子任务的预计耗时`。
+- **进行中记 0 分。** 唯一的例外是真的数得出来：`--count 3/6`，已迁移 3 个接口。数出来的是证据，估出来的"60%"不是。
+- **剩余时间自动修正。** 用 `--took 40m` 记实际耗时。有两个以上样本、覆盖计划 20% 以上、且速度偏差超过 15% 时，剩余时间按实测速度重算。
+- **完成要有证据。** 子任务可以写 `done_when`，标完成时用 `--evidence` 附上证据。
+- **重启不丢。** `replan` 改计划时保留已完成的工作，并记下为什么改。
+- **中英文输出**，根据任务标题自动选择。
 
 ## 安装
 
@@ -132,9 +145,15 @@ python3 scripts/progress.py history                          # 回放每一步
 账本就是一个普通文件，所以在会话或 Agent 之间交接没有问题：下一个运行 `render` 接着干就行。
 目前还不支持多个写入者同时写，请由一个协调者负责更新。
 
+---
+
+<p align="center">
+  如果它帮你少听了一次"快好了"，点个 ⭐ 能让更多人看到它。
+</p>
+
 ## 参与贡献
 
-欢迎报 bug、在更多 Agent 上实测、补翻译。见 [CONTRIBUTING.md](CONTRIBUTING.md)。跑测试：
+欢迎报 bug、在更多 Agent 上实测、补翻译。见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)。跑测试：
 
 ```bash
 python -m unittest discover -s tests

@@ -1,51 +1,61 @@
-# showcase-progress
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <img src="assets/banner-light.svg" alt="showcase-progress: a progress bar your AI agent can't fake" width="100%">
+  </picture>
+</p>
 
-**A progress bar for AI agents that can't be faked.**
+<p align="center">
+  <a href="https://github.com/panzero666/showcase-progress/actions/workflows/test.yml"><img src="https://github.com/panzero666/showcase-progress/actions/workflows/test.yml/badge.svg" alt="tests"></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B-3776AB" alt="python 3.8+">
+  <img src="https://img.shields.io/badge/dependencies-zero-2ea44f" alt="zero dependencies">
+  <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent%20Skills-standard-7c3aed" alt="Agent Skills"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
+  <a href="https://github.com/panzero666/showcase-progress/stargazers"><img src="https://img.shields.io/github/stars/panzero666/showcase-progress?style=flat&color=f5b301" alt="stars"></a>
+</p>
 
-[![test](https://github.com/panzero666/showcase-progress/actions/workflows/test.yml/badge.svg)](https://github.com/panzero666/showcase-progress/actions/workflows/test.yml)
-![python](https://img.shields.io/badge/python-3.8%2B-blue)
-![deps](https://img.shields.io/badge/dependencies-none-brightgreen)
-![license](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <b>English</b> · <a href="README.zh-CN.md">中文</a>
+  &nbsp;|&nbsp;
+  <a href="#install">Install</a> · <a href="#how-it-works">How it works</a> · <a href="PROMPT.md">Prompt-only version</a> · <a href="#faq">FAQ</a>
+</p>
 
-[中文说明](README.zh-CN.md)
+---
 
-<p align="center"><img src="assets/demo.svg" alt="showcase-progress demo" width="820"></p>
+Your agent says **"about 70% done, almost there."** An hour later it says the same thing.
 
-Look at the demo again: after Q2, **time left went up** (4h10m → 4h16m). Q1 and
-Q2 both took longer than estimated, so the script stopped trusting the plan and
-rescaled the rest. Most agent progress reports would have said "35% done,
-almost there".
+**showcase-progress** replaces that feeling with a ledger. The agent plans and estimates;
+a tiny script does the arithmetic, and only finished or countable work moves the bar.
 
-## The problem
+| What your agent usually says | What showcase-progress shows |
+|---|---|
+| "About 70% done" | `60.6%`: 166 of 275 planned minutes, straight from the ledger |
+| Splits the job into 20 steps, does the easy ones first | Weighted by estimated time, so splitting can't inflate it |
+| "Just a few more minutes"… for an hour | **2h23m left at current pace**: the ETA is rescaled by measured speed |
+| "Done!" (the file exists, does it run?) | Done needs evidence; `check` flags done-without-proof |
+| Starts over after you close the session | The ledger is a file on disk: `render` and carry on |
 
-Ask an AI agent how far along it is and you get a feeling, not a number:
+## See it run
 
-- "70% done" — based on what?
-- Split the work into 20 tiny steps and finish the easy ones → instant 50%.
-- "Just a few more minutes" — for the last hour.
-- A file exists, so the step counts as done. Does it run?
+<p align="center"><img src="assets/demo.svg" alt="showcase-progress demo" width="860"></p>
 
-## What this skill does
+Watch the right-hand number after **Q2**: time left goes **up**, from 4h10m to 4h16m.
+Q1 and Q2 both ran long, so the script stopped trusting the plan and rescaled the rest.
+That's the honest answer, even if it's not the one anyone wants to hear.
 
-showcase-progress is an [Agent Skill](https://agentskills.io) — a `SKILL.md` plus
-a small, dependency-free Python script. The agent plans, the script keeps the
-books:
+## How it works
 
-1. **Progress is weighted by estimated time, not by step count.**
-   `progress = estimated time of done subtasks / estimated time of all subtasks`.
-   Splitting work into more pieces can't inflate it.
-2. **"In progress" earns nothing.** Only `done` counts. The one exception is a
-   real count (`--count 3/6` handlers migrated) — a count is evidence, a guessed
-   "60%" is not.
-3. **The ETA corrects itself.** Record how long finished subtasks really took
-   (`--took 40m`); once there are two real samples covering 20%+ of the plan and
-   the pace is off by more than 15%, time left is rescaled and labelled
-   "at current pace".
-4. **Done needs evidence.** Subtasks can carry a `done_when` condition;
-   `check` flags anything marked done without proof.
-5. **Nothing is lost.** The ledger is a JSON file in your project. Close the
-   session, come back tomorrow, `render`, continue. `replan` keeps finished work
-   and records why the plan changed.
+showcase-progress is an [Agent Skill](https://agentskills.io): a `SKILL.md` plus one
+dependency-free Python script.
+
+- **Time-weighted.** `progress = estimated time of done subtasks / estimated time of all subtasks`.
+- **In progress earns nothing.** The one exception is a real count: `--count 3/6` handlers
+  migrated. A count is evidence; a guessed "60%" is not.
+- **Self-correcting ETA.** Record real durations with `--took 40m`. After two samples covering
+  20%+ of the plan, if the pace is off by more than 15%, time left is rescaled.
+- **Evidence for done.** Subtasks can carry `done_when`; mark them done with `--evidence`.
+- **Survives restarts.** `replan` keeps finished work and records why the plan changed.
+- **English and Chinese output**, chosen from the task title.
 
 ## Install
 
@@ -156,10 +166,16 @@ The ledger is a plain file, so a hand-off between sessions or agents just works:
 the next one runs `render` and carries on. Concurrent writers aren't supported
 yet; have one coordinator do the updates.
 
+---
+
+<p align="center">
+  If this saved you from one more "almost done", a ⭐ helps other people find it.
+</p>
+
 ## Contributing
 
 Bug reports, tests on more agents, and translations are welcome. See
-[CONTRIBUTING.md](CONTRIBUTING.md). Run the tests with:
+[CONTRIBUTING.md](.github/CONTRIBUTING.md). Run the tests with:
 
 ```bash
 python -m unittest discover -s tests
