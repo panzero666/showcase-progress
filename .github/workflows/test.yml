@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.8", "3.12", "3.13"]
+        exclude:
+          - os: macos-latest
+            python: "3.8"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python -m unittest discover -s tests -v
+      - name: CLI smoke test
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          python scripts/progress.py --state smoke.json init --plan examples/plan.json
+          python scripts/progress.py --state smoke.json update "Q1=done" --took 20m --brief
+          python scripts/progress.py --state smoke.json check

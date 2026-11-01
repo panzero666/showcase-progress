@@ -1,0 +1,6 @@
+.showcase-progress/
+.agent-progress/
+__pycache__/
+*.pyc
+*.tmp
+smoke.json

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Showcase Progress"
+  short_description: "Time-weighted progress bar with an ETA that corrects itself"
+  default_prompt: "Use $showcase-progress to split this task into estimated subtasks and keep a progress bar as you go."

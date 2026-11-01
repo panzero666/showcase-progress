@@ -1,0 +1,16 @@
+{
+  "title": "Add password reset to the web app",
+  "subtasks": [
+    {"id": "Q1", "title": "Map the current auth flow", "est": "25m",
+     "done_when": "notes list every file that touches login"},
+    {"id": "Q2", "title": "Reset-token endpoint works", "est": "1h10m",
+     "done_when": "POST /reset returns 202 and a token row exists"},
+    {"id": "Q3", "title": "Email template + sending", "est": "45m",
+     "done_when": "test inbox receives the reset mail"},
+    {"id": "Q4", "title": "Reset page and form", "est": "1h20m",
+     "done_when": "user can set a new password end to end"},
+    {"id": "Q5", "title": "Tests for expiry and reuse", "est": "40m",
+     "done_when": "new tests pass in CI"},
+    {"id": "Q6", "title": "Changelog and docs", "est": "15m"}
+  ]
+}
